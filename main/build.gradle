@@ -30,4 +30,9 @@ android {
     }
 }
 
-dependencies {}
+dependencies {
+    compile 'org.fusesource.mqtt-client:mqtt-client:1.6@jar'
+    compile 'org.fusesource.hawtbuf:hawtbuf:1.9@jar'
+    compile 'org.fusesource.hawtdispatch:hawtdispatch:1.18@jar'
+    compile 'org.fusesource.hawtdispatch:hawtdispatch-transport:1.18@jar'
+}

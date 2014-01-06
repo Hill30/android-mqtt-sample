@@ -70,8 +70,10 @@
     </content>
     <orderEntry type="jdk" jdkName="Android API 10 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="support-v4-19.0.1" level="project" />
-    <orderEntry type="library" exported="" name="ComAndroidSupportAppcompatV71901.aar" level="project" />
+    <orderEntry type="library" exported="" name="mqtt-client-1.6" level="project" />
+    <orderEntry type="library" exported="" name="hawtdispatch-transport-1.18" level="project" />
+    <orderEntry type="library" exported="" name="hawtdispatch-1.18" level="project" />
+    <orderEntry type="library" exported="" name="hawtbuf-1.9" level="project" />
   </component>
 </module>
 
