@@ -1,7 +1,10 @@
 package com.hill30.android.mqttSample;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -30,6 +33,14 @@ public class MainActivity extends Activity {
                 startService(mServiceIntent);
             }
         });
+
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                address.setText(intent.getCharSequenceExtra(MQTTService.BROADCAST_MSG));
+            }
+        }, new IntentFilter(MQTTService.BROADCAST_ACTION));
+
 
     }
 
