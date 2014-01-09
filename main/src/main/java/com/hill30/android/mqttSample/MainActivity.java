@@ -19,13 +19,15 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
 
     private EditText address;
+    private ArrayList<Visit> visits;
+    private ArrayAdapter<Visit> visitsAdapter;
 
     class Visit {
 
         private final String id;
 
-        public Visit(String id) {
-            this.id = id;
+        public Visit(CharSequence content) {
+            this.id = content.toString();
         }
 
         @Override
@@ -53,12 +55,11 @@ public class MainActivity extends Activity {
             }
         });
 
-        ArrayList<Visit> visitObjects = new ArrayList<Visit>();
-        visitObjects.add(new Visit("line 1"));
-        visitObjects.add(new Visit("line 2"));
+        visits = new ArrayList<Visit>();
 
         ListView visits = (ListView) findViewById(R.id.visits);
-        visits.setAdapter(new ArrayAdapter<Visit>(this, android.R.layout.simple_list_item_1, visitObjects));
+        visitsAdapter = new ArrayAdapter<Visit>(this, android.R.layout.simple_list_item_1, MainActivity.this.visits);
+        visits.setAdapter(visitsAdapter);
 
         visits.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -73,7 +74,8 @@ public class MainActivity extends Activity {
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                address.setText(intent.getCharSequenceExtra(MQTTService.BROADCAST_MSG));
+                MainActivity.this.visits.add(new Visit(intent.getCharSequenceExtra(MQTTService.BROADCAST_MSG)));
+                visitsAdapter.notifyDataSetChanged();
             }
         }, new IntentFilter(MQTTService.BROADCAST_ACTION));
 
