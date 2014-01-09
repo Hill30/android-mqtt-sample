@@ -6,15 +6,28 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.text.format.DateFormat;
+import android.text.format.Time;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.hill30.android.MQTTService;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class MainActivity extends Activity {
 
@@ -22,17 +35,27 @@ public class MainActivity extends Activity {
     private ArrayList<Visit> visits;
     private ArrayAdapter<Visit> visitsAdapter;
 
+    private Gson gson;
+    private Visit selected;
+    private EditText startTime;
+    private EditText endTime;
+
+    public Visit visitFromJson(String json) {
+        try {
+            return gson.fromJson((String) json, Visit.class);
+        } catch (Exception ex) {
+            return new Visit();
+        }
+    }
+
     class Visit {
 
-        private final String id;
-
-        public Visit(CharSequence content) {
-            this.id = content.toString();
-        }
+        public Date startTime;
+        public Date endTime;
 
         @Override
         public String toString() {
-            return id;
+            return startTime.toLocaleString();
         }
     }
 
@@ -42,6 +65,28 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         address = (EditText)findViewById(R.id.address);
+        startTime = (EditText)findViewById(R.id.startTime);
+        endTime = (EditText)findViewById(R.id.endTime);
+
+        JsonSerializer<Date> ser = new JsonSerializer<Date>() {
+            @Override
+            public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext
+                    context) {
+                return src == null ? null : new JsonPrimitive(src.getTime());
+            }
+        };
+
+        JsonDeserializer<Date> deser = new JsonDeserializer<Date>() {
+            @Override
+            public Date deserialize(JsonElement json, Type typeOfT,
+                                    JsonDeserializationContext context) throws JsonParseException {
+                return json == null ? null : new Date(json.getAsString());
+            }
+        };
+
+        gson = new GsonBuilder()
+                .registerTypeAdapter(Date.class, ser)
+                .registerTypeAdapter(Date.class, deser).create();
 
         findViewById(R.id.connect).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,7 +111,9 @@ public class MainActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, final View view,
                                     int position, long id) {
-                final Visit item = (Visit) parent.getItemAtPosition(position);
+                selected = (Visit) parent.getItemAtPosition(position);
+                startTime.setText(selected.startTime.toLocaleString());
+                endTime.setText(selected.endTime.toLocaleString());
             }
 
         });
@@ -74,7 +121,7 @@ public class MainActivity extends Activity {
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                MainActivity.this.visits.add(new Visit(intent.getCharSequenceExtra(MQTTService.BROADCAST_MSG)));
+                MainActivity.this.visits.add(visitFromJson(intent.getCharSequenceExtra(MQTTService.BROADCAST_MSG).toString()));
                 visitsAdapter.notifyDataSetChanged();
             }
         }, new IntentFilter(MQTTService.BROADCAST_ACTION));

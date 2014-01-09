@@ -158,7 +158,8 @@ public class MQTTService extends IntentService {
                     //}
                     String messagePayLoad = new String(msg.getData());
                     Log.d(TAG, String.format("Received %d. Message: %s.", count, messagePayLoad));
-                    reportMessage( String.format("Received %d. Message: %s.", count, messagePayLoad) );
+//                    reportMessage( String.format("Received %d. Message: %s.", count, messagePayLoad) );
+                    reportMessage(body);
                     count ++;
                 }
                 ack.run();
