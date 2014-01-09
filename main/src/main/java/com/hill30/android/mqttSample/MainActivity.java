@@ -5,7 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.text.format.Time;
 import android.view.View;
@@ -26,6 +29,8 @@ import com.google.gson.JsonSerializer;
 import com.hill30.android.MQTTService;
 
 import java.lang.reflect.Type;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -39,6 +44,8 @@ public class MainActivity extends Activity {
     private Visit selected;
     private EditText startTime;
     private EditText endTime;
+    private SimpleDateFormat dateFormat;
+    private View send;
 
     public Visit visitFromJson(String json) {
         try {
@@ -65,14 +72,41 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         address = (EditText)findViewById(R.id.address);
+
+        dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm a ");
+
+        TextWatcher watcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                try {
+                    dateFormat.parse(editable.toString());
+//                    send.setEnabled(true);
+//                    ((View)editable).setBackgroundColor(Color.WHITE);
+                } catch (ParseException e) {
+//                    send.setEnabled(false);
+//                    ((View)editable).setBackgroundColor(Color.RED);
+                }
+            }
+        };
+
         startTime = (EditText)findViewById(R.id.startTime);
+        startTime.addTextChangedListener(watcher);
         endTime = (EditText)findViewById(R.id.endTime);
+        endTime.addTextChangedListener(watcher);
 
         JsonSerializer<Date> ser = new JsonSerializer<Date>() {
             @Override
             public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext
                     context) {
-                return src == null ? null : new JsonPrimitive(src.getTime());
+                return src == null ? null : new JsonPrimitive(new SimpleDateFormat("dd/MM/yyyy, Ka").format(src));
             }
         };
 
@@ -100,6 +134,14 @@ public class MainActivity extends Activity {
             }
         });
 
+        send = findViewById(R.id.send);
+        send.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String res = gson.toJson(selected);
+            }
+        });
+
         visits = new ArrayList<Visit>();
 
         ListView visits = (ListView) findViewById(R.id.visits);
@@ -112,8 +154,14 @@ public class MainActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, final View view,
                                     int position, long id) {
                 selected = (Visit) parent.getItemAtPosition(position);
-                startTime.setText(selected.startTime.toLocaleString());
-                endTime.setText(selected.endTime.toLocaleString());
+                if (selected.startTime == null)
+                    startTime.setText("");
+                else
+                    startTime.setText(dateFormat.format(selected.startTime));
+                if (selected.endTime == null)
+                    endTime.setText("");
+                else
+                    endTime.setText(dateFormat.format(selected.endTime));
             }
 
         });
