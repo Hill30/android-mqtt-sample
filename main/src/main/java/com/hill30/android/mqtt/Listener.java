@@ -13,15 +13,16 @@ import org.fusesource.mqtt.client.Topic;
 public class Listener extends Connection {
 
     private final Service service;
+    private static final String LISTENER_TOPIC_SUFFIX = "Inbound";
 
     public Listener(Service service, Intent intent) {
-        super(service, intent);
+        super(intent);
         this.service = service;
     }
 
     @Override
     protected void onConnected(CallbackConnection connection) {
-        final String topic_name = getTopicName();
+        final String topic_name = getTopicName() + "." + LISTENER_TOPIC_SUFFIX + ".User";
         Topic[] topics = {new Topic(topic_name, QoS.AT_LEAST_ONCE)};
 
         connection.listener(new org.fusesource.mqtt.client.Listener() {

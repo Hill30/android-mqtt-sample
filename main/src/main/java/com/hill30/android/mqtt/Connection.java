@@ -6,6 +6,7 @@ import android.util.Log;
 import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.MQTT;
+import org.fusesource.mqtt.client.QoS;
 
 import java.net.URISyntaxException;
 
@@ -29,11 +30,11 @@ public abstract class Connection {
             return value;
     }
 
-    public Connection(Service service, Intent intent)
+    public Connection(Intent intent)
     {
         String brokerAddress = getConnectionParameter(intent, Service.BROKER_URL, "tcp://10.0.2.2:1883");
 
-        rootTopicName = getConnectionParameter(intent, Service.BROKER_TOPIC, "amp");
+        rootTopicName = getConnectionParameter(intent, Service.BROKER_TOPIC, "ServiceTracker");
 
         String userName = getConnectionParameter(intent, Service.USER_NAME, "");
 
@@ -85,5 +86,9 @@ public abstract class Connection {
     }
 
     protected void onConnected(CallbackConnection connection) { }
+
+    protected void publish(String topic, byte[] payload, QoS qos, boolean flag, Callback<Void> callback) {
+        connection.publish(topic, payload, qos, flag, callback);
+    }
 
 }
