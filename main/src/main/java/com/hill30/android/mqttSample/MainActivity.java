@@ -146,7 +146,7 @@ public class MainActivity extends Activity {
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+/*
                 if (startTime.getText().toString().isEmpty())
                     selected.startTime = null;
                 else
@@ -160,7 +160,10 @@ public class MainActivity extends Activity {
                     try {
                         selected.endTime = dateFormat.parse(endTime.getText().toString());
                     } catch (ParseException e) {}
-                String res = gson.toJson(selected);
+                String message = gson.toJson(selected); */
+                Intent intent = new Intent(Service.SEND_MESSAGE);
+                intent.putExtra(Service.MESSAGE_PAYLOAD, "message");
+                sendBroadcast(intent);
             }
         });
 

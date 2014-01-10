@@ -20,5 +20,6 @@ public class Service extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         Listener listener = new Listener(this, intent);
+//        Sender sender = new Sender(this, intent);
     }
 }
