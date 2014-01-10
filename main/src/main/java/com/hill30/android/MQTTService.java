@@ -17,13 +17,13 @@ import java.net.URISyntaxException;
 
 public class MQTTService extends IntentService {
 
-    public final static String BROKER_URL = "org.example.mqtt.BROKER_URL";
-    public final static String BROKER_TOPIC = "org.example.mqtt.BROKER_TOPIC";
-    public final static String USER_NAME = "org.example.mqtt.USER_NAME";
-    public final static String USER_PSWD = "org.example.mqtt.USER_PSWD";
-    public final static String BROADCAST_ACTION = "org.example.mqtt.BROADCAST";
-    public final static String BROADCAST_MSG = "org.example.mqtt.BROADCAST_MSG";
-    public final static String CLIENT_ID = "org.example.mqtt.CLIENT_ID";
+    public final static String BROKER_URL = "com.hill30.android.mqtt.BROKER_URL";
+    public final static String BROKER_TOPIC = "com.hill30.android.mqtt.BROKER_TOPIC";
+    public final static String BROADCAST_ACTION = "com.hill30.android.mqtt.BROADCAST";
+    public final static String BROADCAST_MSG = "com.hill30.android.mqtt.BROADCAST_MSG";
+    public final static String USER_NAME = "com.hill30.android.mqtt.USER_NAME";
+    public final static String USER_PSWD = "com.hill30.android.mqtt.USER_PSWD";
+    public final static String CLIENT_ID = "com.hill30.android.mqtt.CLIENT_ID";
 
     private final String TAG = "MQTTListener";
     private String brokerAddress = "tcp://10.0.2.2:1883";
@@ -91,20 +91,16 @@ public class MQTTService extends IntentService {
         mqtt = new MQTT();
         mqtt.setClientId(sClientId);
 
-        try
-        {
+        try {
             mqtt.setHost(brokerAddress);
             Log.d(TAG, "Address set: " + brokerAddress);
 
-
-            if(sUserName != null && !sUserName.equals(""))
-            {
+            if(sUserName != null && !sUserName.equals("")) {
                 mqtt.setUserName(sUserName);
                 Log.d(TAG, "UserName set: [" + sUserName + "]");
             }
 
-            if(sPassword != null && !sPassword.equals(""))
-            {
+            if(sPassword != null && !sPassword.equals("")) {
                 mqtt.setPassword(sPassword);
                 Log.d(TAG, "Password set: [" + sPassword + "]");
             }
@@ -112,60 +108,36 @@ public class MQTTService extends IntentService {
             mqtt.setCleanSession(false); ///AAB for durable topic
             listenerConnection = mqtt.callbackConnection();
         }
-        catch(URISyntaxException urise)
-        {
+        catch(URISyntaxException urise) {
             Log.e(TAG, "URISyntaxException connecting to " + brokerAddress + " - " + urise);
         }
-        catch(Exception exc)
-        {
+        catch(Exception exc) {
             Log.e(TAG, "Exception: " + exc.getMessage());
         }
 
         listenerConnection.listener(new org.fusesource.mqtt.client.Listener() {
             long count = 0;
-            long start = System.currentTimeMillis();
 
-            public void onConnected() {
-            }
-            public void onDisconnected() {
-            }
+            public void onConnected() { }
+
+            public void onDisconnected() { }
+
             public void onFailure(Throwable value) {
                 value.printStackTrace();
                 System.exit(-2);
             }
             public void onPublish(UTF8Buffer topic, Buffer msg, Runnable ack) {
                 String body = msg.utf8().toString();
-                if( "SHUTDOWN".equals(body)) {
-                    long diff = System.currentTimeMillis() - start;
-                    Log.d(TAG, String.format("Received %d in %.2f seconds", count, (1.0*diff/1000.0)));
-                    listenerConnection.disconnect(new Callback<Void>() {
-                        @Override
-                        public void onSuccess(Void value) {
-                            System.exit(0);
-                        }
-                        @Override
-                        public void onFailure(Throwable value) {
-                            value.printStackTrace();
-                            System.exit(-2);
-                        }
-                    });
-                } else {
-                    if( count == 0 ) {
-                        start = System.currentTimeMillis();
-                    }
-                    //if( count % 1000 == 0 ) {
-                    //    Log.d(TAG, String.format("Received %d messages.", count));
-                    //}
-                    String messagePayLoad = new String(msg.getData());
-                    Log.d(TAG, String.format("Received %d. Message: %s.", count, messagePayLoad));
-//                    reportMessage( String.format("Received %d. Message: %s.", count, messagePayLoad) );
-                    reportMessage(body);
-                    count ++;
-                }
+                String messagePayLoad = new String(msg.getData());
+                Log.d(TAG, String.format("Received %d. Message: %s.", count, messagePayLoad));
+                reportMessage(body);
+                count ++;
                 ack.run();
             }
         });
+
         listenerConnection.connect(new Callback<Void>() {
+
             @Override
             public void onSuccess(Void value) {
                 Topic[] topics = {new Topic(topic_name, QoS.AT_LEAST_ONCE)};
@@ -192,13 +164,8 @@ public class MQTTService extends IntentService {
     private void reportMessage(String msg)
     {
         // report message back to listeners
-        /*
-     * Creates a new Intent containing a Uri object
-     * BROADCAST_ACTION is a custom Intent action
-     */
         Intent localIntent =
                 new Intent(BROADCAST_ACTION)
-                        // Puts the status into the Intent
                         .putExtra(BROADCAST_MSG, msg);
         // Broadcasts the Intent to receivers in this app.
         sendBroadcast(localIntent);
