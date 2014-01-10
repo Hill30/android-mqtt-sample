@@ -66,6 +66,36 @@ public class MainActivity extends Activity {
         }
     }
 
+    class Watcher implements TextWatcher {
+
+        private final EditText control;
+
+        public Watcher(EditText control) {
+            this.control = control;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+            try {
+                if (!editable.toString().isEmpty())
+                    dateFormat.parse(editable.toString());
+                send.setEnabled(true);
+                control.setTextColor(Color.BLACK);
+            } catch (ParseException e) {
+                send.setEnabled(false);
+                control.setTextColor(Color.RED);
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,32 +105,10 @@ public class MainActivity extends Activity {
 
         dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm a ");
 
-        TextWatcher watcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i2, int i3) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i2, int i3) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                try {
-                    dateFormat.parse(editable.toString());
-//                    send.setEnabled(true);
-//                    ((View)editable).setBackgroundColor(Color.WHITE);
-                } catch (ParseException e) {
-//                    send.setEnabled(false);
-//                    ((View)editable).setBackgroundColor(Color.RED);
-                }
-            }
-        };
-
         startTime = (EditText)findViewById(R.id.startTime);
-        startTime.addTextChangedListener(watcher);
+        startTime.addTextChangedListener(new Watcher(startTime));
         endTime = (EditText)findViewById(R.id.endTime);
-        endTime.addTextChangedListener(watcher);
+        endTime.addTextChangedListener(new Watcher(endTime));
 
         JsonSerializer<Date> ser = new JsonSerializer<Date>() {
             @Override
@@ -138,6 +146,20 @@ public class MainActivity extends Activity {
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                if (startTime.getText().toString().isEmpty())
+                    selected.startTime = null;
+                else
+                    try {
+                        selected.startTime = dateFormat.parse(startTime.getText().toString());
+                    } catch (ParseException e) {}
+
+                if (endTime.getText().toString().isEmpty())
+                    selected.endTime = null;
+                else
+                    try {
+                        selected.endTime = dateFormat.parse(endTime.getText().toString());
+                    } catch (ParseException e) {}
                 String res = gson.toJson(selected);
             }
         });
