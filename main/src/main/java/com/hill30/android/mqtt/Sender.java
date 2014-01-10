@@ -26,18 +26,29 @@ public class Sender extends Connection {
     private static final String MSG_FILE_PREFIX = "msg_to_send_";
     private static final String MSG_FILE_EXT = ".txt";
     private static final String SENDER_TOPIC_SUFFIX = "Outbound";
-    private final Service service;
     private final String msg_folder_path;
+    private final String topicName;
 
     private List<Pair<String,String>> lstMsgToSend = new ArrayList<Pair<String, String>>();
 
     public Sender(Service service, Intent intent) {
         super(intent);
-        this.service = service;
 
         msg_folder_path = service.getApplicationContext().getFilesDir().getPath();
+        topicName = getTopicName() + "." + SENDER_TOPIC_SUFFIX;
 
-        readStoredMessagesToBeSend();
+        File folder = new File(msg_folder_path);
+        Log.d(TAG, String.format("Message directory: %s", msg_folder_path));
+        if (folder.isDirectory()) {
+            for (File fileEntry : folder.listFiles()) {
+                if(fileEntry.getName().contains(MSG_FILE_PREFIX)) {
+                    String msgRead = readMessageFile(fileEntry.getName());
+                    Log.d(TAG, String.format("Message to send. FileName: %s, MsgBody: %s.", fileEntry.getName(), msgRead));
+
+                    publish(msgRead, fileEntry.getName());
+                }
+            }
+        }
 
         service.registerReceiver(new BroadcastReceiver() {
 
@@ -45,73 +56,44 @@ public class Sender extends Connection {
             public void onReceive(Context context, Intent intent) {
                 String message = intent.getStringExtra(Service.MESSAGE_PAYLOAD);
                 Log.e(TAG, "Received message notification: " + message);
-                synchronized (Sender.class) {
-                    // create message file name. Format: msg_to_send_ddMMyyyhhmmss.txt
-                    SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
-                    String timeStamp = s.format(new Date());
-                    String msgFileName = MSG_FILE_PREFIX + timeStamp + MSG_FILE_EXT;
 
-                    lstMsgToSend.add(new Pair(message, msgFileName));
+                // create message file name. Format: msg_to_send_ddMMyyyhhmmss.txt
+                SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
+                String timeStamp = s.format(new Date());
+                String msgFileName = MSG_FILE_PREFIX + timeStamp + MSG_FILE_EXT;
 
-                    writeMessageToFile(message, msgFileName);
-                }
+                writeMessageToFile(message, msgFileName);
+                 publish(message, msgFileName);
             }
 
         }, new IntentFilter(Service.SEND_MESSAGE));
 
-        String topicName = getTopicName() + "." + SENDER_TOPIC_SUFFIX;
-
-        while(true) {
-            if(lstMsgToSend.isEmpty()) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            else {
-                synchronized (Sender.class) {
-                    Pair toPublish = lstMsgToSend.get(0);
-                    final String message = (String)toPublish.first;
-                    final String fileNameToClear = (String)toPublish.second;
-
-                    // publish message
-                    publish(topicName, message.getBytes(), QoS.AT_LEAST_ONCE, true,
-                        new Callback<Void>() {
-
-                            @Override
-                            public void onSuccess(Void aVoid) {
-
-                                Log.d(TAG, String.format("Acked published message id: %s, destination: %s.", fileNameToClear, message));
-                                deleteStoredMessage(fileNameToClear); //TODO: move to non-blocking cleaning.
-                            }
-
-                            @Override
-                            public void onFailure(Throwable throwable) {
-                                Log.e(TAG,"Error sending message: " + throwable.getMessage());
-                            }
-                        });
-
-                    lstMsgToSend.remove(0);
-                }
+        synchronized (this) {
+            try {
+                this.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
+
     }
 
-    private void readStoredMessagesToBeSend() {
-        final File folder = new File(msg_folder_path);
-        Log.d(TAG, String.format("Message directory: %s", msg_folder_path));
-        if (folder.isDirectory()) {
-            for (final File fileEntry : folder.listFiles()) {
-                if(fileEntry.getName().contains(MSG_FILE_PREFIX)) {
-                    String msgRead = readMessageFile(fileEntry.getName());
-                    Log.d(TAG, String.format("Message to send. FileName: %s, MsgBody: %s.", fileEntry.getName(), msgRead));
+    private void publish(final String message, final String fileNameToClear) {
+        publish(topicName, message.getBytes(), QoS.AT_LEAST_ONCE, true,
+            new Callback<Void>() {
 
-                    lstMsgToSend.add(new Pair( msgRead, fileEntry.getName() ));
+                @Override
+                public void onSuccess(Void aVoid) {
+                    Log.d(TAG, String.format("Acked published message id: %s, destination: %s.", fileNameToClear, message));
+                    deleteStoredMessage(fileNameToClear);
                 }
-            }
-        }
-        return;
+
+                @Override
+                public void onFailure(Throwable throwable) {
+                    Log.e(TAG,"Error sending message: " + throwable.getMessage());
+                }
+            });
+
     }
 
     private String readMessageFile(String fileName) {
@@ -142,11 +124,10 @@ public class Sender extends Connection {
         }
     }
 
-    private boolean deleteStoredMessage(final String fileName) {
+    private void deleteStoredMessage(final String fileName) {
         File fileToDelete = new File(msg_folder_path, fileName);
         fileToDelete.delete();
         Log.d(TAG, String.format("Deleted file path: %s, name: %s. ", fileToDelete.getPath(), fileToDelete.getName()));
-        return true;
     }
 
 }
