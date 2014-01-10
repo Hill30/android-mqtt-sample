@@ -18,7 +18,7 @@
             </intent-filter>
         </activity>
         <service
-            android:name="com.hill30.android.MQTTService"
+            android:name="com.hill30.android.mqtt.Service"
             android:exported="false"
             android:enabled="true">
         </service>

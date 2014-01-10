@@ -26,7 +26,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.hill30.android.MQTTService;
+import com.hill30.android.mqtt.Service;
 
 import java.lang.reflect.Type;
 import java.text.ParseException;
@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
 
         address = (EditText)findViewById(R.id.address);
 
-        dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm a ");
+        dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm a");
 
         startTime = (EditText)findViewById(R.id.startTime);
         startTime.addTextChangedListener(new Watcher(startTime));
@@ -133,10 +133,10 @@ public class MainActivity extends Activity {
         findViewById(R.id.connect).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent mServiceIntent = new Intent(MainActivity.this, MQTTService.class);
-                mServiceIntent.putExtra(MQTTService.BROKER_URL, "tcp://10.0.2.2:1883");
-                mServiceIntent.putExtra(MQTTService.BROKER_TOPIC, "TestOne");
-                mServiceIntent.putExtra(MQTTService.CLIENT_ID, "android_svc");
+                Intent mServiceIntent = new Intent(MainActivity.this, Service.class);
+                //mServiceIntent.putExtra(MQTTService.BROKER_URL, "tcp://10.0.2.2:1883");
+                //mServiceIntent.putExtra(MQTTService.BROKER_TOPIC, "TestOne");
+                //mServiceIntent.putExtra(MQTTService.CLIENT_ID, "android_svc");
 
                 startService(mServiceIntent);
             }
@@ -191,10 +191,10 @@ public class MainActivity extends Activity {
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                MainActivity.this.visits.add(visitFromJson(intent.getCharSequenceExtra(MQTTService.BROADCAST_MSG).toString()));
+                MainActivity.this.visits.add(visitFromJson(intent.getCharSequenceExtra(Service.MESSAGE_PAYLOAD).toString()));
                 visitsAdapter.notifyDataSetChanged();
             }
-        }, new IntentFilter(MQTTService.BROADCAST_ACTION));
+        }, new IntentFilter(Service.MESSAGE_RECEIVED));
 
     }
 
