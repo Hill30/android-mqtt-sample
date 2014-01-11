@@ -1,6 +1,8 @@
 package com.hill30.android.mqtt;
 
 import android.content.Intent;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 
 import org.fusesource.mqtt.client.Callback;
@@ -10,13 +12,13 @@ import org.fusesource.mqtt.client.QoS;
 
 import java.net.URISyntaxException;
 
-public abstract class Connection {
+public abstract class Connection extends android.os.Handler {
 
     public final static String TAG = "MQTTConnection";
 
     private MQTT mqtt;
     private CallbackConnection connection;
-    private String rootTopicName;
+    private String rootTopicName = "ServiceTracker";
 
     protected String getTopicName() {
         return rootTopicName;
@@ -30,7 +32,18 @@ public abstract class Connection {
             return value;
     }
 
-    public Connection(Intent intent)
+    public Connection(Looper looper) {
+        super(looper);
+    }
+
+    @Override
+    public void handleMessage(Message msg) {
+        Connect("tcp://10.0.2.2:1883", "", "", "user" + suffix());
+    }
+
+    protected abstract String suffix();
+
+    private void Connect(Intent intent)
     {
         String brokerAddress = getConnectionParameter(intent, Service.BROKER_URL, "tcp://10.0.2.2:1883");
 
@@ -41,53 +54,59 @@ public abstract class Connection {
         String password = getConnectionParameter(intent, Service.USER_PSWD, "");
 
         String clientId = getConnectionParameter(intent, Service.CLIENT_ID, "user");
+    }
 
-        mqtt = new MQTT();
-        mqtt.setClientId(clientId);
+    private void Connect(String brokerAddress, String userName, String password, String clientId) {
 
-        try {
-            mqtt.setHost(brokerAddress);
-            Log.d(TAG, "Address set: " + brokerAddress);
+        synchronized (Connection.class) {
 
-            if(!userName.isEmpty()) {
-                mqtt.setUserName(userName);
-                Log.d(TAG, "UserName set: [" + userName + "]");
+            mqtt = new MQTT();
+            mqtt.setClientId(clientId);
+
+            try {
+                mqtt.setHost(brokerAddress);
+                Log.d(TAG, "Address set: " + brokerAddress);
+
+                if(!userName.isEmpty()) {
+                    mqtt.setUserName(userName);
+                    Log.d(TAG, "UserName set: [" + userName + "]");
+                }
+
+                if(!password.isEmpty()) {
+                    mqtt.setPassword(password);
+                    Log.d(TAG, "Password set: [" + password + "]");
+                }
+
+                mqtt.setCleanSession(false); ///AAB for durable topic
+                connection = mqtt.callbackConnection();
+            }
+            catch(URISyntaxException urise) {
+                Log.e(TAG, "URISyntaxException connecting to " + brokerAddress + " - " + urise);
+            }
+            catch(Exception exc) {
+                Log.e(TAG, "Exception: " + exc.getMessage());
             }
 
-            if(!password.isEmpty()) {
-                mqtt.setPassword(password);
-                Log.d(TAG, "Password set: [" + password + "]");
-            }
+            connection.connect(new org.fusesource.mqtt.client.Callback<Void>() {
+                @Override
+                public void onSuccess(Void value) {
+                    Log.d(TAG, "Sender received onSuccess() in connect to broker.");
+                    onConnected(connection);
+                }
 
-            mqtt.setCleanSession(false); ///AAB for durable topic
-            connection = mqtt.callbackConnection();
+                @Override
+                public void onFailure(Throwable value) {
+                    Log.e(TAG, "Sender exiting. Received onFailure in connect(). Message " + value.getMessage());
+                    value.printStackTrace();
+                }
+            });
+
         }
-        catch(URISyntaxException urise) {
-            Log.e(TAG, "URISyntaxException connecting to " + brokerAddress + " - " + urise);
-        }
-        catch(Exception exc) {
-            Log.e(TAG, "Exception: " + exc.getMessage());
-        }
-
-        connection.connect(new Callback<Void>() {
-            @Override
-            public void onSuccess(Void value) {
-                Log.d(TAG, "Sender received onSuccess() in connect to broker.");
-                onConnected(connection);
-            }
-
-            @Override
-            public void onFailure(Throwable value) {
-                Log.e(TAG, "Sender exiting. Received onFailure in connect().");
-                value.printStackTrace();
-                System.exit(-2);
-            }
-        });
     }
 
     protected void onConnected(CallbackConnection connection) { }
 
-    protected void publish(String topic, byte[] payload, QoS qos, boolean flag, Callback<Void> callback) {
+    protected void publish(String topic, byte[] payload, QoS qos, boolean flag, org.fusesource.mqtt.client.Callback<Void> callback) {
         connection.publish(topic, payload, qos, flag, callback);
     }
 

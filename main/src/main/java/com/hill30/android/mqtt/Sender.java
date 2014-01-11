@@ -4,11 +4,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Looper;
 import android.util.Log;
 import android.util.Pair;
 
+import org.fusesource.hawtbuf.Buffer;
+import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.mqtt.client.Callback;
+import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.QoS;
+import org.fusesource.mqtt.client.Topic;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,13 +31,25 @@ public class Sender extends Connection {
     private static final String MSG_FILE_PREFIX = "msg_to_send_";
     private static final String MSG_FILE_EXT = ".txt";
     private static final String SENDER_TOPIC_SUFFIX = "Outbound";
-    private final String msg_folder_path;
-    private final String topicName;
+    private static final String LISTENER_TOPIC_SUFFIX = "Inbound";
+    private String msg_folder_path;
+    private String topicName;
+    private Service service;
 
     private List<Pair<String,String>> lstMsgToSend = new ArrayList<Pair<String, String>>();
 
-    public Sender(Service service, Intent intent) {
-        super(intent);
+    public Sender(Service service, Looper looper) {
+        super(looper);
+        this.service = service;
+    }
+
+    @Override
+    protected String suffix() {
+        return "sender";
+    }
+
+    @Override
+    public void onConnected(CallbackConnection connection) {
 
         msg_folder_path = service.getApplicationContext().getFilesDir().getPath();
         topicName = getTopicName() + "." + SENDER_TOPIC_SUFFIX;
@@ -68,19 +85,51 @@ public class Sender extends Connection {
 
         }, new IntentFilter(Service.SEND_MESSAGE));
 
-        synchronized (this) {
-            try {
-                this.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        final String topic_name = getTopicName() + "." + LISTENER_TOPIC_SUFFIX + ".User";
+        Topic[] topics = {new Topic(topic_name, QoS.AT_LEAST_ONCE)};
+
+        connection.listener(new org.fusesource.mqtt.client.Listener() {
+            long count = 0;
+
+            public void onConnected() { }
+
+            public void onDisconnected() { }
+
+            public void onFailure(Throwable value) {
+                Log.d(TAG, String.format("Listener failure. Message: %s.", value.getMessage()));
+                value.printStackTrace();
             }
-        }
+            public void onPublish(UTF8Buffer topic, Buffer msg, Runnable ack) {
+                String body = msg.utf8().toString();
+                String messagePayLoad = new String(msg.getData());
+                Log.d(TAG, String.format("Received %d. Message: %s.", count, messagePayLoad));
+
+                // Broadcasts the Intent to receivers in this app.
+                service.sendBroadcast(
+                        new Intent(Service.MESSAGE_RECEIVED).putExtra(Service.MESSAGE_PAYLOAD, body)
+                );
+
+                count ++;
+                ack.run();
+            }
+        });
+
+        connection.subscribe(topics, new org.fusesource.mqtt.client.Callback<byte[]>() {
+            public void onSuccess(byte[] qoses) {
+                Log.d(Connection.TAG, String.format("Subscribed to topic: %s.", topic_name));
+            }
+
+            public void onFailure(Throwable value) {
+                Log.d(TAG, String.format("Subscribe failure. Message: %s.", value.getMessage()));
+                value.printStackTrace();
+            }
+        });
 
     }
 
     private void publish(final String message, final String fileNameToClear) {
         publish(topicName, message.getBytes(), QoS.AT_LEAST_ONCE, true,
-            new Callback<Void>() {
+            new org.fusesource.mqtt.client.Callback<Void>() {
 
                 @Override
                 public void onSuccess(Void aVoid) {
