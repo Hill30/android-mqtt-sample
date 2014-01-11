@@ -21,9 +21,9 @@ public class Service extends android.app.Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        HandlerThread listenerThread = new HandlerThread("mqttListener", Process.THREAD_PRIORITY_BACKGROUND);
-        listenerThread.start();
-        listener = new Listener(this, listenerThread.getLooper());
+//        HandlerThread listenerThread = new HandlerThread("mqttListener", Process.THREAD_PRIORITY_BACKGROUND);
+//        listenerThread.start();
+//        listener = new Listener(this, listenerThread.getLooper());
         HandlerThread senderThread = new HandlerThread("mqttSender", Process.THREAD_PRIORITY_BACKGROUND);
         senderThread.start();
         sender = new Sender(this, senderThread.getLooper());
