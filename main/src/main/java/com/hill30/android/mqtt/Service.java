@@ -1,12 +1,19 @@
 package com.hill30.android.mqtt;
 
-import android.app.IntentService;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.os.*;
+import android.content.IntentFilter;
+import android.os.HandlerThread;
+import android.os.IBinder;
+import android.os.Message;
 import android.os.Process;
-import android.widget.Toast;
+import android.util.Log;
 
 import org.fusesource.mqtt.client.CallbackConnection;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Service extends android.app.Service {
     public final static String BROKER_URL = "com.hill30.android.mqtt.BROKER_URL";
@@ -24,25 +31,39 @@ public class Service extends android.app.Service {
     @Override
     public void onCreate() {
         super.onCreate();
-//        HandlerThread listenerThread = new HandlerThread("mqttListener", Process.THREAD_PRIORITY_BACKGROUND);
-//        listenerThread.start();
-//        listener = new Listener(this, listenerThread.getLooper());
-        HandlerThread senderThread = new HandlerThread("mqttSender", Process.THREAD_PRIORITY_BACKGROUND);
-        senderThread.start();
-//        sender = new Sender(this, senderThread.getLooper());
-        connection = new Connection(senderThread.getLooper()) {
+        HandlerThread connectionThread = new HandlerThread("mqttSender", Process.THREAD_PRIORITY_BACKGROUND);
+        connectionThread.start();
 
-            @Override
-            protected String suffix() {
-                return null;
-            }
+        connection = new Connection(connectionThread.getLooper()) {
 
             @Override
             public void onConnected(CallbackConnection connection) {
-                listener = new Listener(Service.this, connection, "ServiceTracker");
+                listener = new Listener(connection, "ServiceTracker"){
+
+                    @Override
+                    public void onMessageReceived(String message) {
+                        // Broadcasts the Intent to receivers in this app.
+                        sendBroadcast(
+                                new Intent(Service.MESSAGE_RECEIVED).putExtra(Service.MESSAGE_PAYLOAD, message)
+                        );
+
+
+                    }
+                };
+
                 sender = new Sender(Service.this, this, "ServiceTracker");
             }
+
         };
+
+        registerReceiver(new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                sender.send(connection, intent.getStringExtra(Service.MESSAGE_PAYLOAD));
+            }
+
+        }, new IntentFilter(Service.SEND_MESSAGE));
     }
 
     @Override
@@ -52,9 +73,6 @@ public class Service extends android.app.Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-//        Message msg = listener.obtainMessage();
-//        listener.sendMessage(msg);
 
         Message msg = connection.obtainMessage();
         connection.sendMessage(msg);

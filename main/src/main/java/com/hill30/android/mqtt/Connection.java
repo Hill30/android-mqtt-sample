@@ -38,10 +38,8 @@ public abstract class Connection extends android.os.Handler {
 
     @Override
     public void handleMessage(Message msg) {
-        Connect("tcp://10.0.2.2:1883", "", "", "user" + suffix());
+        Connect("tcp://10.0.2.2:1883", "", "", "user");
     }
-
-    protected abstract String suffix();
 
     private void Connect(Intent intent)
     {

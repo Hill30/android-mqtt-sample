@@ -31,16 +31,10 @@ public class Sender {
     private static final String MSG_FILE_PREFIX = "msg_to_send_";
     private static final String MSG_FILE_EXT = ".txt";
     private static final String SENDER_TOPIC_SUFFIX = "Outbound";
-    private static final String LISTENER_TOPIC_SUFFIX = "Inbound";
     private String msg_folder_path;
     private String topicName;
-    private Service service;
-
-    private List<Pair<String,String>> lstMsgToSend = new ArrayList<Pair<String, String>>();
-    private Listener listener;
 
     public Sender(Service service, final Connection connection, String topic) {
-        this.service = service;
 
         msg_folder_path = service.getApplicationContext().getFilesDir().getPath();
         topicName = topic + "." + SENDER_TOPIC_SUFFIX;
@@ -58,24 +52,19 @@ public class Sender {
             }
         }
 
-        service.registerReceiver(new BroadcastReceiver() {
+    }
 
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String message = intent.getStringExtra(Service.MESSAGE_PAYLOAD);
-                Log.e(Connection.TAG, "Received message notification: " + message);
+    public void send(Connection connection, String message) {
 
-                // create message file name. Format: msg_to_send_ddMMyyyhhmmss.txt
-                SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
-                String timeStamp = s.format(new Date());
-                String msgFileName = MSG_FILE_PREFIX + timeStamp + MSG_FILE_EXT;
+        Log.e(Connection.TAG, "Sending message: " + message);
+        // create message file name. Format: msg_to_send_ddMMyyyhhmmss.txt
+        SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
+        String timeStamp = s.format(new Date());
+        String msgFileName = MSG_FILE_PREFIX + timeStamp + MSG_FILE_EXT;
 
-                writeMessageToFile(message, msgFileName);
-                publish(connection, message, msgFileName);
-            }
-
-        }, new IntentFilter(Service.SEND_MESSAGE));
-
+        writeMessageToFile(message, msgFileName);
+        Log.e(Connection.TAG, "Message saved to : " + msgFileName);
+        publish(connection, message, msgFileName);
     }
 
     private void publish(Connection connection, final String message, final String fileNameToClear) {

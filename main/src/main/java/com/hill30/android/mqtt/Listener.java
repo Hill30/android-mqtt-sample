@@ -1,21 +1,18 @@
 package com.hill30.android.mqtt;
 
-import android.content.Intent;
-import android.os.Looper;
 import android.util.Log;
 
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
-import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.QoS;
 import org.fusesource.mqtt.client.Topic;
 
-public class Listener {
+public abstract class Listener {
 
     private static final String LISTENER_TOPIC_SUFFIX = "Inbound";
 
-    public Listener(final Service service, CallbackConnection connection, String topic) {
+    public Listener(CallbackConnection connection, String topic) {
         final String topic_name = topic + "." + LISTENER_TOPIC_SUFFIX + ".User";
         Topic[] topics = {new Topic(topic_name, QoS.AT_LEAST_ONCE)};
 
@@ -35,10 +32,7 @@ public class Listener {
                 String messagePayLoad = new String(msg.getData());
                 Log.d(Connection.TAG, String.format("Received %d. Message: %s.", count, messagePayLoad));
 
-                // Broadcasts the Intent to receivers in this app.
-                service.sendBroadcast(
-                    new Intent(Service.MESSAGE_RECEIVED).putExtra(Service.MESSAGE_PAYLOAD, body)
-                );
+                onMessageReceived(body);
 
                 count ++;
                 ack.run();
@@ -57,4 +51,7 @@ public class Listener {
         });
 
     }
+
+    public abstract void onMessageReceived(String message);
+
 }
