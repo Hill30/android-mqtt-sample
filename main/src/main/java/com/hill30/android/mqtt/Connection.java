@@ -104,9 +104,9 @@ public abstract class Connection extends android.os.Handler {
         }
     }
 
-    protected void onConnected(CallbackConnection connection) { }
+    public abstract void onConnected(CallbackConnection connection); { }
 
-    protected void publish(String topic, byte[] payload, QoS qos, boolean flag, org.fusesource.mqtt.client.Callback<Void> callback) {
+    public void publish(String topic, byte[] payload, QoS qos, boolean flag, org.fusesource.mqtt.client.Callback<Void> callback) {
         connection.publish(topic, payload, qos, flag, callback);
     }
 

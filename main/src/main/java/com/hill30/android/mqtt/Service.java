@@ -6,6 +6,8 @@ import android.os.*;
 import android.os.Process;
 import android.widget.Toast;
 
+import org.fusesource.mqtt.client.CallbackConnection;
+
 public class Service extends android.app.Service {
     public final static String BROKER_URL = "com.hill30.android.mqtt.BROKER_URL";
     public final static String BROKER_TOPIC = "com.hill30.android.mqtt.BROKER_TOPIC";
@@ -17,6 +19,7 @@ public class Service extends android.app.Service {
     public final static String SEND_MESSAGE = "com.hill30.android.mqtt.SEND_MESSAGE";
     private Listener listener;
     private Sender sender;
+    private Connection connection;
 
     @Override
     public void onCreate() {
@@ -26,7 +29,20 @@ public class Service extends android.app.Service {
 //        listener = new Listener(this, listenerThread.getLooper());
         HandlerThread senderThread = new HandlerThread("mqttSender", Process.THREAD_PRIORITY_BACKGROUND);
         senderThread.start();
-        sender = new Sender(this, senderThread.getLooper());
+//        sender = new Sender(this, senderThread.getLooper());
+        connection = new Connection(senderThread.getLooper()) {
+
+            @Override
+            protected String suffix() {
+                return null;
+            }
+
+            @Override
+            public void onConnected(CallbackConnection connection) {
+                listener = new Listener(Service.this, connection, "ServiceTracker");
+                sender = new Sender(Service.this, this, "ServiceTracker");
+            }
+        };
     }
 
     @Override
@@ -40,8 +56,8 @@ public class Service extends android.app.Service {
 //        Message msg = listener.obtainMessage();
 //        listener.sendMessage(msg);
 
-        Message msg = sender.obtainMessage();
-        sender.sendMessage(msg);
+        Message msg = connection.obtainMessage();
+        connection.sendMessage(msg);
 
         // If we get killed, after returning from here, restart
         return START_STICKY;

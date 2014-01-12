@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class Sender extends Connection {
+public class Sender {
 
     private static final String MSG_FILE_PREFIX = "msg_to_send_";
     private static final String MSG_FILE_EXT = ".txt";
@@ -39,31 +39,21 @@ public class Sender extends Connection {
     private List<Pair<String,String>> lstMsgToSend = new ArrayList<Pair<String, String>>();
     private Listener listener;
 
-    public Sender(Service service, Looper looper) {
-        super(looper);
+    public Sender(Service service, final Connection connection, String topic) {
         this.service = service;
-    }
-
-    @Override
-    protected String suffix() {
-        return "sender";
-    }
-
-    @Override
-    public void onConnected(CallbackConnection connection) {
 
         msg_folder_path = service.getApplicationContext().getFilesDir().getPath();
-        topicName = getTopicName() + "." + SENDER_TOPIC_SUFFIX;
+        topicName = topic + "." + SENDER_TOPIC_SUFFIX;
 
         File folder = new File(msg_folder_path);
-        Log.d(TAG, String.format("Message directory: %s", msg_folder_path));
+        Log.d(Connection.TAG, String.format("Message directory: %s", msg_folder_path));
         if (folder.isDirectory()) {
             for (File fileEntry : folder.listFiles()) {
                 if(fileEntry.getName().contains(MSG_FILE_PREFIX)) {
                     String msgRead = readMessageFile(fileEntry.getName());
-                    Log.d(TAG, String.format("Message to send. FileName: %s, MsgBody: %s.", fileEntry.getName(), msgRead));
+                    Log.d(Connection.TAG, String.format("Message to send. FileName: %s, MsgBody: %s.", fileEntry.getName(), msgRead));
 
-                    publish(msgRead, fileEntry.getName());
+                    publish(connection, msgRead, fileEntry.getName());
                 }
             }
         }
@@ -73,7 +63,7 @@ public class Sender extends Connection {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String message = intent.getStringExtra(Service.MESSAGE_PAYLOAD);
-                Log.e(TAG, "Received message notification: " + message);
+                Log.e(Connection.TAG, "Received message notification: " + message);
 
                 // create message file name. Format: msg_to_send_ddMMyyyhhmmss.txt
                 SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -81,36 +71,35 @@ public class Sender extends Connection {
                 String msgFileName = MSG_FILE_PREFIX + timeStamp + MSG_FILE_EXT;
 
                 writeMessageToFile(message, msgFileName);
-                 publish(message, msgFileName);
+                publish(connection, message, msgFileName);
             }
 
         }, new IntentFilter(Service.SEND_MESSAGE));
 
-        listener = new Listener(service, connection, getTopicName());
     }
 
-    private void publish(final String message, final String fileNameToClear) {
-        publish(topicName, message.getBytes(), QoS.AT_LEAST_ONCE, true,
-            new org.fusesource.mqtt.client.Callback<Void>() {
+    private void publish(Connection connection, final String message, final String fileNameToClear) {
+        connection.publish(topicName, message.getBytes(), QoS.AT_LEAST_ONCE, true,
+                new org.fusesource.mqtt.client.Callback<Void>() {
 
-                @Override
-                public void onSuccess(Void aVoid) {
-                    Log.d(TAG, String.format("Acked published message id: %s, destination: %s.", fileNameToClear, message));
-                    deleteStoredMessage(fileNameToClear);
-                }
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d(Connection.TAG, String.format("Acked published message id: %s, destination: %s.", fileNameToClear, message));
+                        deleteStoredMessage(fileNameToClear);
+                    }
 
-                @Override
-                public void onFailure(Throwable throwable) {
-                    Log.e(TAG,"Error sending message: " + throwable.getMessage());
-                }
-            });
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        Log.e(Connection.TAG, "Error sending message: " + throwable.getMessage());
+                    }
+                });
 
     }
 
     private String readMessageFile(String fileName) {
         StringBuilder stringBuilder = new StringBuilder();
         String line;
-        BufferedReader in = null;
+        BufferedReader in;
 
         try {
             in = new BufferedReader(new FileReader(new File(msg_folder_path, fileName)));
@@ -118,9 +107,9 @@ public class Sender extends Connection {
                 stringBuilder.append(line);
 
         } catch (FileNotFoundException e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(Connection.TAG, e.getMessage());
         } catch (IOException e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(Connection.TAG, e.getMessage());
         }
         return stringBuilder.toString();
     }
@@ -131,14 +120,14 @@ public class Sender extends Connection {
             out.write(fileContents);
             out.close();
         } catch (IOException e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(Connection.TAG, e.getMessage());
         }
     }
 
     private void deleteStoredMessage(final String fileName) {
         File fileToDelete = new File(msg_folder_path, fileName);
         fileToDelete.delete();
-        Log.d(TAG, String.format("Deleted file path: %s, name: %s. ", fileToDelete.getPath(), fileToDelete.getName()));
+        Log.d(Connection.TAG, String.format("Deleted file path: %s, name: %s. ", fileToDelete.getPath(), fileToDelete.getName()));
     }
 
 }
