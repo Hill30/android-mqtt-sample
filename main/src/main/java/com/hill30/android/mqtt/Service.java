@@ -8,12 +8,8 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Process;
-import android.util.Log;
 
 import org.fusesource.mqtt.client.CallbackConnection;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class Service extends android.app.Service {
     public final static String BROKER_URL = "com.hill30.android.mqtt.BROKER_URL";
@@ -24,6 +20,7 @@ public class Service extends android.app.Service {
     public final static String MESSAGE_RECEIVED = "com.hill30.android.mqtt.MESSAGE_RECEIVED";
     public final static String MESSAGE_PAYLOAD = "com.hill30.android.mqtt.MESSAGE_PAYLOAD";
     public final static String SEND_MESSAGE = "com.hill30.android.mqtt.SEND_MESSAGE";
+    private String rootTopic = "ServiceTracker";
     private Listener listener;
     private Sender sender;
     private Connection connection;
@@ -31,14 +28,14 @@ public class Service extends android.app.Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        HandlerThread connectionThread = new HandlerThread("mqttSender", Process.THREAD_PRIORITY_BACKGROUND);
+        HandlerThread connectionThread = new HandlerThread("mqttConnection", Process.THREAD_PRIORITY_BACKGROUND);
         connectionThread.start();
 
         connection = new Connection(connectionThread.getLooper()) {
 
             @Override
             public void onConnected(CallbackConnection connection) {
-                listener = new Listener(connection, "ServiceTracker"){
+                listener = new Listener(connection, rootTopic){
 
                     @Override
                     public void onMessageReceived(String message) {
@@ -51,7 +48,7 @@ public class Service extends android.app.Service {
                     }
                 };
 
-                sender = new Sender(Service.this, this, "ServiceTracker");
+                sender = new Sender(getApplicationContext().getFilesDir().getPath(), this, rootTopic);
             }
 
         };
@@ -75,6 +72,8 @@ public class Service extends android.app.Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         Message msg = connection.obtainMessage();
+        // This is what initiates the connection
+        // Connection parameters will have to go into msg
         connection.sendMessage(msg);
 
         // If we get killed, after returning from here, restart

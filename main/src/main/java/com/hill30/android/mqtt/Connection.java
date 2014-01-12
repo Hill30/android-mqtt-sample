@@ -1,11 +1,9 @@
 package com.hill30.android.mqtt;
 
-import android.content.Intent;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
-import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.MQTT;
 import org.fusesource.mqtt.client.QoS;
@@ -18,19 +16,6 @@ public abstract class Connection extends android.os.Handler {
 
     private MQTT mqtt;
     private CallbackConnection connection;
-    private String rootTopicName = "ServiceTracker";
-
-    protected String getTopicName() {
-        return rootTopicName;
-    }
-
-    private String getConnectionParameter(Intent intent, String name, String defaultValue) {
-        String value = intent.getStringExtra(name);
-        if(value == null || value.isEmpty())
-            return defaultValue;
-        else
-            return value;
-    }
 
     public Connection(Looper looper) {
         super(looper);
@@ -39,19 +24,6 @@ public abstract class Connection extends android.os.Handler {
     @Override
     public void handleMessage(Message msg) {
         Connect("tcp://10.0.2.2:1883", "", "", "user");
-    }
-
-    private void Connect(Intent intent)
-    {
-        String brokerAddress = getConnectionParameter(intent, Service.BROKER_URL, "tcp://10.0.2.2:1883");
-
-        rootTopicName = getConnectionParameter(intent, Service.BROKER_TOPIC, "ServiceTracker");
-
-        String userName = getConnectionParameter(intent, Service.USER_NAME, "");
-
-        String password = getConnectionParameter(intent, Service.USER_PSWD, "");
-
-        String clientId = getConnectionParameter(intent, Service.CLIENT_ID, "user");
     }
 
     private void Connect(String brokerAddress, String userName, String password, String clientId) {
@@ -102,7 +74,7 @@ public abstract class Connection extends android.os.Handler {
         }
     }
 
-    public abstract void onConnected(CallbackConnection connection); { }
+    public abstract void onConnected(CallbackConnection connection);
 
     public void publish(String topic, byte[] payload, QoS qos, boolean flag, org.fusesource.mqtt.client.Callback<Void> callback) {
         connection.publish(topic, payload, qos, flag, callback);

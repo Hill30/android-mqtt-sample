@@ -1,19 +1,8 @@
 package com.hill30.android.mqtt;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Looper;
 import android.util.Log;
-import android.util.Pair;
 
-import org.fusesource.hawtbuf.Buffer;
-import org.fusesource.hawtbuf.UTF8Buffer;
-import org.fusesource.mqtt.client.Callback;
-import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.QoS;
-import org.fusesource.mqtt.client.Topic;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,9 +11,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class Sender {
 
@@ -34,22 +21,23 @@ public class Sender {
     private String msg_folder_path;
     private String topicName;
 
-    public Sender(Service service, final Connection connection, String topic) {
+    public Sender(String persistenceFolder, final Connection connection, String topic) {
 
-        msg_folder_path = service.getApplicationContext().getFilesDir().getPath();
+        msg_folder_path = persistenceFolder;
         topicName = topic + "." + SENDER_TOPIC_SUFFIX;
 
         File folder = new File(msg_folder_path);
         Log.d(Connection.TAG, String.format("Message directory: %s", msg_folder_path));
         if (folder.isDirectory()) {
-            for (File fileEntry : folder.listFiles()) {
-                if(fileEntry.getName().contains(MSG_FILE_PREFIX)) {
-                    String msgRead = readMessageFile(fileEntry.getName());
-                    Log.d(Connection.TAG, String.format("Message to send. FileName: %s, MsgBody: %s.", fileEntry.getName(), msgRead));
+            if (folder.listFiles() != null)
+                for (File fileEntry : folder.listFiles()) {
+                    if(fileEntry.getName().contains(MSG_FILE_PREFIX)) {
+                        String msgRead = readMessageFile(fileEntry.getName());
+                        Log.d(Connection.TAG, String.format("Resending message. FileName: %s, MsgBody: %s.", fileEntry.getName(), msgRead));
 
-                    publish(connection, msgRead, fileEntry.getName());
+                        publish(connection, msgRead, fileEntry.getName());
+                    }
                 }
-            }
         }
 
     }
@@ -69,19 +57,19 @@ public class Sender {
 
     private void publish(Connection connection, final String message, final String fileNameToClear) {
         connection.publish(topicName, message.getBytes(), QoS.AT_LEAST_ONCE, true,
-                new org.fusesource.mqtt.client.Callback<Void>() {
+            new org.fusesource.mqtt.client.Callback<Void>() {
 
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d(Connection.TAG, String.format("Acked published message id: %s, destination: %s.", fileNameToClear, message));
-                        deleteStoredMessage(fileNameToClear);
-                    }
+                @Override
+                public void onSuccess(Void aVoid) {
+                    Log.d(Connection.TAG, String.format("Acked published message id: %s, destination: %s.", fileNameToClear, message));
+                    deleteStoredMessage(fileNameToClear);
+                }
 
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        Log.e(Connection.TAG, "Error sending message: " + throwable.getMessage());
-                    }
-                });
+                @Override
+                public void onFailure(Throwable throwable) {
+                    Log.e(Connection.TAG, "Error sending message: " + throwable.getMessage());
+                }
+            });
 
     }
 

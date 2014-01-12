@@ -4,6 +4,7 @@ import android.util.Log;
 
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.QoS;
 import org.fusesource.mqtt.client.Topic;
@@ -39,7 +40,7 @@ public abstract class Listener {
             }
         });
 
-        connection.subscribe(topics, new org.fusesource.mqtt.client.Callback<byte[]>() {
+        connection.subscribe(topics, new Callback<byte[]>() {
             public void onSuccess(byte[] qoses) {
                 Log.d(Connection.TAG, String.format("Subscribed to topic: %s.", topic_name));
             }
