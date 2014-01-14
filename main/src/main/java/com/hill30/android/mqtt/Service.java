@@ -34,7 +34,7 @@ public class Service extends android.app.Service {
         connection = new Connection(connectionThread.getLooper()) {
 
             @Override
-            public void onConnected(CallbackConnection connection) {
+            public void onConnected(final CallbackConnection connection) {
                 listener = new Listener(connection, rootTopic){
 
                     @Override
@@ -49,18 +49,19 @@ public class Service extends android.app.Service {
                 };
 
                 sender = new Sender(getApplicationContext().getFilesDir().getPath(), this, rootTopic);
+
+                registerReceiver(new BroadcastReceiver() {
+
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        sender.send(Service.this.connection, intent.getStringExtra(Service.MESSAGE_PAYLOAD));
+                    }
+
+                }, new IntentFilter(Service.SEND_MESSAGE));
             }
 
         };
 
-        registerReceiver(new BroadcastReceiver() {
-
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                sender.send(connection, intent.getStringExtra(Service.MESSAGE_PAYLOAD));
-            }
-
-        }, new IntentFilter(Service.SEND_MESSAGE));
     }
 
     @Override

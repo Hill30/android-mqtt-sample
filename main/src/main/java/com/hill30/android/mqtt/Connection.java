@@ -4,6 +4,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.MQTT;
 import org.fusesource.mqtt.client.QoS;
@@ -68,6 +69,19 @@ public abstract class Connection extends android.os.Handler {
             }
         });
 
+    }
+
+    public void restart() {
+        connection.disconnect(new org.fusesource.mqtt.client.Callback<Void>() {
+            @Override
+            public void onSuccess(Void value) {
+                Connect("tcp://10.0.2.2:1883", "", "", "user");
+                Log.e(TAG, "Connection restarted ");
+            }
+
+            @Override
+            public void onFailure(Throwable value) { }
+        });
     }
 
     public abstract void onConnected(CallbackConnection connection);
