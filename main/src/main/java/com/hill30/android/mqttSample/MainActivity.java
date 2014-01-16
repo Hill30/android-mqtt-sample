@@ -57,12 +57,13 @@ public class MainActivity extends Activity {
 
     class Visit {
 
+        public int id;
         public Date startTime;
         public Date endTime;
 
         @Override
         public String toString() {
-            return startTime.toLocaleString();
+            return "(" + id + ") " + startTime.toLocaleString();
         }
     }
 
@@ -103,7 +104,7 @@ public class MainActivity extends Activity {
 
         address = (EditText)findViewById(R.id.address);
 
-        dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm a");
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         startTime = (EditText)findViewById(R.id.startTime);
         startTime.addTextChangedListener(new Watcher(startTime));
@@ -114,7 +115,7 @@ public class MainActivity extends Activity {
             @Override
             public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext
                     context) {
-                return src == null ? null : new JsonPrimitive(new SimpleDateFormat("dd/MM/yyyy, Ka").format(src));
+                return src == null ? null : new JsonPrimitive(dateFormat.format(src));
             }
         };
 
@@ -122,7 +123,12 @@ public class MainActivity extends Activity {
             @Override
             public Date deserialize(JsonElement json, Type typeOfT,
                                     JsonDeserializationContext context) throws JsonParseException {
-                return json == null ? null : new Date(json.getAsString());
+                try {
+                    return json == null ? null : dateFormat.parse(json.getAsString());
+                }
+                catch(ParseException ex){
+                    throw new JsonParseException(ex);
+                }
             }
         };
 
@@ -146,7 +152,7 @@ public class MainActivity extends Activity {
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-/*
+
                 if (startTime.getText().toString().isEmpty())
                     selected.startTime = null;
                 else
@@ -160,9 +166,9 @@ public class MainActivity extends Activity {
                     try {
                         selected.endTime = dateFormat.parse(endTime.getText().toString());
                     } catch (ParseException e) {}
-                String message = gson.toJson(selected); */
+                String message = gson.toJson(selected);
                 Intent intent = new Intent(Service.SEND_MESSAGE);
-                intent.putExtra(Service.MESSAGE_PAYLOAD, "message");
+                intent.putExtra(Service.MESSAGE_PAYLOAD, message);
                 sendBroadcast(intent);
             }
         });
