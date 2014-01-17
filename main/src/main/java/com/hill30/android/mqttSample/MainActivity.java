@@ -60,6 +60,8 @@ public class MainActivity extends Activity {
         public int id;
         public Date startTime;
         public Date endTime;
+        public int messageSource;
+        public int employeeId;
 
         @Override
         public String toString() {
