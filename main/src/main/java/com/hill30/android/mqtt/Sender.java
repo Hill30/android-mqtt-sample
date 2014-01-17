@@ -55,8 +55,8 @@ public class Sender {
         publish(connection, message, msgFileName);
     }
 
-    private void publish(Connection connection, final String message, final String fileNameToClear) {
-        connection.publish(topicName, message.getBytes(), QoS.AT_LEAST_ONCE, true,
+    private void publish(final Connection connection, final String message, final String fileNameToClear) {
+        connection.publish(topicName, message.getBytes(), QoS.EXACTLY_ONCE, true,
             new org.fusesource.mqtt.client.Callback<Void>() {
 
                 @Override
@@ -68,6 +68,7 @@ public class Sender {
                 @Override
                 public void onFailure(Throwable throwable) {
                     Log.e(Connection.TAG, "Error sending message: " + throwable.getMessage());
+                    connection.restart();
                 }
             });
 
