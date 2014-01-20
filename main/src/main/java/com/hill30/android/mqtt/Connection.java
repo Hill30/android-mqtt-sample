@@ -23,7 +23,8 @@ public abstract class Connection extends android.os.Handler {
 
     @Override
     public void handleMessage(Message msg) {
-        Connect("tcp://10.0.2.2:1883", "", "", "user");
+        //Connect("tcp://10.0.2.2:1883", "", "", "user");
+        Connect("tcp://217.119.26.211:1883", "", "", "user");
     }
 
     private void Connect(String brokerAddress, String userName, String password, String clientId) {
@@ -75,7 +76,8 @@ public abstract class Connection extends android.os.Handler {
         connection.disconnect(new org.fusesource.mqtt.client.Callback<Void>() {
             @Override
             public void onSuccess(Void value) {
-                Connect("tcp://10.0.2.2:1883", "", "", "user");
+                //Connect("tcp://10.0.2.2:1883", "", "", "user");
+                Connect("tcp://217.119.26.211:1883", "", "", "user");
                 Log.e(TAG, "Connection restarted ");
             }
 
