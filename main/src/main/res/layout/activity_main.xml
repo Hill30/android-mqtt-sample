@@ -8,15 +8,12 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.hill30.android.mqttSample.MainActivity$PlaceholderFragment">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
         <LinearLayout
+            android:id="@+id/pnlTop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:layout_alignParentTop="true"
             >
             <TextView
                 android:layout_width="0dp"
@@ -28,7 +25,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="2"
                 android:layout_height="wrap_content"
-                android:text="217.119.26.211"
+                android:text="10.1.0.104"
                 android:lines="1"/>
             <Button
                 android:id="@+id/connect"
@@ -36,59 +33,57 @@
                 android:layout_weight="1.2"
                 android:layout_height="wrap_content"
                 android:text="Connect"/>
+
+            <Button
+                android:id="@+id/btnReset"
+                android:layout_width="0dp"
+                android:layout_weight="1.2"
+                android:layout_height="wrap_content"
+                android:text="Reset"/>
         </LinearLayout>
 
-        <ListView
-            android:id="@+id/visits"
-            android:layout_width="match_parent"
-            android:layout_height="250dp">
-        </ListView>
-
         <LinearLayout
+            android:id="@+id/pnlBottom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Start Time:    "
-                    />
-                <EditText
-                    android:id="@+id/startTime"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:lines="1"/>
-            </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <EditText
+                android:id="@+id/startTime"
+                android:layout_width="0dp"
+                android:layout_weight="40"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="End Time:      "
-                    />
-                <EditText
-                    android:id="@+id/endTime"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:lines="1"/>
-            </LinearLayout>
+                android:hint="Start time"
+                android:lines="1"/>
+
+            <EditText
+                android:id="@+id/endTime"
+                android:layout_width="0dp"
+                android:layout_weight="40"
+                android:layout_height="wrap_content"
+                android:hint="End Time"
+                android:lines="1"/>
+
             <Button
                 android:id="@+id/send"
                 android:layout_gravity="center"
-                android:text="   Send   "
-                android:layout_width="wrap_content"
+                android:text="Send"
+                android:layout_width="0dp"
+                android:layout_weight="20"
                 android:layout_height="wrap_content" />
 
         </LinearLayout>
 
-    </LinearLayout>
+        <ListView
+            android:id="@+id/visits"
+            android:layout_below="@id/pnlTop"
+            android:layout_above="@id/pnlBottom"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </ListView>
+
+
 
 </RelativeLayout>

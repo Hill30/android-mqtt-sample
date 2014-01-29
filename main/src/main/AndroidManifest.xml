@@ -3,6 +3,7 @@
     package="com.hill30.android.mqttSample" >
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
         android:allowBackup="true"
@@ -22,6 +23,12 @@
             android:exported="false"
             android:enabled="true">
         </service>
+
+        <receiver android:name="com.hill30.android.net.NetworkStatusReceiver" >
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

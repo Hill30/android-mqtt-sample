@@ -8,6 +8,10 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Process;
+import android.util.Log;
+import android.widget.Toast;
+
+import com.hill30.android.net.Constants;
 
 import org.fusesource.mqtt.client.CallbackConnection;
 
@@ -20,6 +24,7 @@ public class Service extends android.app.Service {
     public final static String MESSAGE_RECEIVED = "com.hill30.android.mqtt.MESSAGE_RECEIVED";
     public final static String MESSAGE_PAYLOAD = "com.hill30.android.mqtt.MESSAGE_PAYLOAD";
     public final static String SEND_MESSAGE = "com.hill30.android.mqtt.SEND_MESSAGE";
+    public static final String RESET_CONNECTION = "com.hill30.android.mqtt.RESET_CONNECTION";
     private String rootTopic = "ServiceTracker";
     private Listener listener;
     private Sender sender;
@@ -28,6 +33,56 @@ public class Service extends android.app.Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        restartConnection();
+
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if(connection != null){
+                    restartConnection();
+                }
+            }
+        }, new IntentFilter(Service.RESET_CONNECTION));
+
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Toast.makeText(context, "Network connected.", Toast.LENGTH_SHORT).show();
+                Log.d("Service", "Network connected");
+            }
+        }, new IntentFilter(Constants.INTENT_NETWORK_CONNECTED));
+
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Toast.makeText(context, "Network not connected.", Toast.LENGTH_SHORT).show();
+                Log.d("Service", "No network");
+            }
+        }, new IntentFilter(Constants.INTENT_NETWORK_DISCONNECTED));
+
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        Log.d("Service", "onStartCommand " + startId);
+
+        Message msg = connection.obtainMessage();
+        // This is what initiates the connection
+        // Connection parameters will have to go into msg
+        connection.sendMessage(msg);
+
+        // If we get killed, after returning from here, restart
+        return START_STICKY;
+    }
+
+    private void restartConnection(){
         HandlerThread connectionThread = new HandlerThread("mqttConnection", Process.THREAD_PRIORITY_BACKGROUND);
         connectionThread.start();
 
@@ -58,27 +113,11 @@ public class Service extends android.app.Service {
                     }
 
                 }, new IntentFilter(Service.SEND_MESSAGE));
+
+
             }
 
         };
-
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-
-        Message msg = connection.obtainMessage();
-        // This is what initiates the connection
-        // Connection parameters will have to go into msg
-        connection.sendMessage(msg);
-
-        // If we get killed, after returning from here, restart
-        return START_STICKY;
     }
 
 }

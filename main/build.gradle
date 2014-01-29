@@ -36,4 +36,5 @@ dependencies {
     compile 'org.fusesource.hawtdispatch:hawtdispatch:1.18@jar'
     compile 'org.fusesource.hawtdispatch:hawtdispatch-transport:1.18@jar'
     compile 'com.google.code.gson:gson:2.2.4'
+    compile 'com.android.support:support-v4:13.0.0'
 }

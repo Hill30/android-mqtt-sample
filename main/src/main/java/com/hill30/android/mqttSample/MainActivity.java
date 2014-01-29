@@ -1,12 +1,20 @@
 package com.hill30.android.mqttSample;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -32,6 +40,7 @@ import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 public class MainActivity extends Activity {
@@ -39,6 +48,7 @@ public class MainActivity extends Activity {
     private EditText address;
     private ArrayList<Visit> visits;
     private ArrayAdapter<Visit> visitsAdapter;
+    private  ListView lstVisits;
 
     private Gson gson;
     private Visit selected;
@@ -138,10 +148,11 @@ public class MainActivity extends Activity {
                 .registerTypeAdapter(Date.class, ser)
                 .registerTypeAdapter(Date.class, deser).create();
 
+        final Intent mServiceIntent = new Intent(MainActivity.this, Service.class);
+
         findViewById(R.id.connect).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent mServiceIntent = new Intent(MainActivity.this, Service.class);
                 //mServiceIntent.putExtra(MQTTService.BROKER_URL, "tcp://10.0.2.2:1883");
                 //mServiceIntent.putExtra(MQTTService.BROKER_TOPIC, "TestOne");
                 //mServiceIntent.putExtra(MQTTService.CLIENT_ID, "android_svc");
@@ -149,6 +160,21 @@ public class MainActivity extends Activity {
                 startService(mServiceIntent);
             }
         });
+
+        findViewById(R.id.btnReset).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendBroadcast(
+                    new Intent(Service.RESET_CONNECTION)
+                );
+            }
+        });
+
+        startService(mServiceIntent);
+
+//        PendingIntent pintent = PendingIntent.getService(MainActivity.this, 0, mServiceIntent, 0);
+//        AlarmManager alarm = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+//        alarm.setRepeating(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis(), 30*1000, pintent);
 
         send = findViewById(R.id.send);
         send.setOnClickListener(new View.OnClickListener() {
@@ -177,11 +203,11 @@ public class MainActivity extends Activity {
 
         visits = new ArrayList<Visit>();
 
-        ListView visits = (ListView) findViewById(R.id.visits);
+        lstVisits = (ListView) findViewById(R.id.visits);
         visitsAdapter = new ArrayAdapter<Visit>(this, android.R.layout.simple_list_item_1, MainActivity.this.visits);
-        visits.setAdapter(visitsAdapter);
+        lstVisits.setAdapter(visitsAdapter);
 
-        visits.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        lstVisits.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, final View view,
@@ -204,9 +230,40 @@ public class MainActivity extends Activity {
             public void onReceive(Context context, Intent intent) {
                 MainActivity.this.visits.add(visitFromJson(intent.getCharSequenceExtra(Service.MESSAGE_PAYLOAD).toString()));
                 visitsAdapter.notifyDataSetChanged();
+                notifyMessages();
+                if(lstVisits != null) lstVisits.smoothScrollToPosition(visitsAdapter.getCount()-1);
             }
         }, new IntentFilter(Service.MESSAGE_RECEIVED));
 
+    }
+
+    private void notifyMessages() {
+        Uri defaultRingtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_launcher)
+                        .setContentTitle("MQTT: new message")
+                        .setSound(defaultRingtoneUri)
+                        .setContentText("Tap to start activity.");
+
+        Intent resultIntent = new Intent(this, MainActivity.class);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addParentStack(MainActivity.class);
+
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification = mBuilder.getNotification();
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+        mNotificationManager.notify(1, notification);
     }
 
 }

@@ -71,6 +71,7 @@
     <orderEntry type="jdk" jdkName="Android API 10 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="mqtt-client-1.6" level="project" />
+    <orderEntry type="library" exported="" name="support-v4-13.0.0" level="project" />
     <orderEntry type="library" exported="" name="hawtdispatch-transport-1.18" level="project" />
     <orderEntry type="library" exported="" name="hawtdispatch-1.18" level="project" />
     <orderEntry type="library" exported="" name="gson-2.2.4" level="project" />
