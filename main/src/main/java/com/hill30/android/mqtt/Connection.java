@@ -4,10 +4,13 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import com.hill30.android.net.Constants;
+
 import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.MQTT;
 import org.fusesource.mqtt.client.QoS;
+import org.fusesource.mqtt.client.Tracer;
 
 import java.net.URISyntaxException;
 
@@ -24,12 +27,18 @@ public abstract class Connection extends android.os.Handler {
     @Override
     public void handleMessage(Message msg) {
         //Connect("tcp://10.0.2.2:1883", "", "", "user");
-        Connect("tcp://10.0.1.104:1883", "", "", "user");
+        Connect("tcp://"+ Constants.ACTIVE_MQ_IP +":1883", "", "", "user");
     }
 
     private void Connect(String brokerAddress, String userName, String password, String clientId) {
 
         MQTT mqtt = new MQTT();
+        mqtt.setTracer(new Tracer(){
+            @Override
+            public void debug(String message, Object... args) {
+                Log.d(TAG, "*** " + String.format(message, args));
+            }
+        });
         mqtt.setClientId(clientId);
 
         try {
@@ -77,7 +86,7 @@ public abstract class Connection extends android.os.Handler {
             @Override
             public void onSuccess(Void value) {
                 //Connect("tcp://10.0.2.2:1883", "", "", "user");
-                Connect("tcp://217.119.26.211:1883", "", "", "user");
+                Connect("tcp://"+ Constants.ACTIVE_MQ_IP +":1883", "", "", "user");
                 Log.e(TAG, "Connection restarted ");
             }
 

@@ -74,6 +74,7 @@
     <orderEntry type="library" exported="" name="support-v4-13.0.0" level="project" />
     <orderEntry type="library" exported="" name="hawtdispatch-transport-1.18" level="project" />
     <orderEntry type="library" exported="" name="hawtdispatch-1.18" level="project" />
+    <orderEntry type="library" exported="" name="paho-mqtt-client-1.0.1" level="project" />
     <orderEntry type="library" exported="" name="gson-2.2.4" level="project" />
     <orderEntry type="library" exported="" name="hawtbuf-1.9" level="project" />
   </component>

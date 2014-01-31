@@ -35,6 +35,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.hill30.android.mqtt.Service;
+import com.hill30.android.net.Constants;
 
 import java.lang.reflect.Type;
 import java.text.ParseException;
@@ -115,7 +116,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         address = (EditText)findViewById(R.id.address);
-
+        address.setText(Constants.ACTIVE_MQ_IP);
         dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         startTime = (EditText)findViewById(R.id.startTime);
