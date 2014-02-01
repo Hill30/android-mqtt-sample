@@ -11,6 +11,7 @@ import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.MQTT;
 import org.fusesource.mqtt.client.QoS;
 import org.fusesource.mqtt.client.Tracer;
+import org.fusesource.mqtt.codec.MQTTFrame;
 
 import java.net.URISyntaxException;
 
@@ -27,6 +28,8 @@ public abstract class Connection extends android.os.Handler {
     @Override
     public void handleMessage(Message msg) {
         //Connect("tcp://10.0.2.2:1883", "", "", "user");
+//        Connect("tcp://217.119.26.211:1883", "", "", "user");
+//        Connect("tcp://192.168.1.67:1883", "", "", "user");
         Connect("tcp://"+ Constants.ACTIVE_MQ_IP +":1883", "", "", "user");
     }
 
@@ -37,6 +40,16 @@ public abstract class Connection extends android.os.Handler {
             @Override
             public void debug(String message, Object... args) {
                 Log.d(TAG, "*** " + String.format(message, args));
+            }
+
+            @Override
+            public void onSend(MQTTFrame frame) {
+                Log.d(TAG, "Sending " + frame.toString());
+            }
+
+            @Override
+            public void onReceive(MQTTFrame frame) {
+                Log.d(TAG, "Received " + frame.toString());
             }
         });
         mqtt.setClientId(clientId);
