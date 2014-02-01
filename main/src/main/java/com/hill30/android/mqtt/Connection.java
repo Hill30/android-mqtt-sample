@@ -14,6 +14,7 @@ public abstract class Connection extends android.os.Handler {
 
     public final static String TAG = "MQTTConnection";
     public static final String LISTENER_TOPIC_SUFFIX = "Inbound";
+    public static final String SENDER_TOPIC_SUFFIX = "Outbound";
 
     private final static String userName = "";
     private final static String password = "";

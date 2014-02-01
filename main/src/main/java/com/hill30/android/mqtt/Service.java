@@ -17,7 +17,7 @@ import com.hill30.android.mqtt.fusesource.Sender;
 import com.hill30.android.mqtt.paho.PahoConnection;
 import com.hill30.android.net.Constants;
 
-import org.fusesource.mqtt.client.CallbackConnection;
+//import org.fusesource.mqtt.client.CallbackConnection;
 
 public class Service extends android.app.Service {
     public final static String BROKER_URL = "com.hill30.android.mqtt.BROKER_URL";

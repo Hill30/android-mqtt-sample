@@ -20,14 +20,13 @@ public class Sender {
 
     private static final String MSG_FILE_PREFIX = "msg_to_send_";
     private static final String MSG_FILE_EXT = ".txt";
-    private static final String SENDER_TOPIC_SUFFIX = "Outbound";
     private String msg_folder_path;
     private String topicName;
 
     public Sender(String persistenceFolder, final Connection connection, String topic) {
 
         msg_folder_path = persistenceFolder;
-        topicName = topic + "." + SENDER_TOPIC_SUFFIX;
+        topicName = topic + "." + Connection.SENDER_TOPIC_SUFFIX;
 
     }
 
