@@ -21,9 +21,11 @@ public abstract class FusesourceConnection extends Connection {
     private CallbackConnection connection;
     private Listener listener;
     private Sender sender;
+    private final String persistenceFolder;
 
-    public FusesourceConnection(Looper looper) {
+    public FusesourceConnection(Looper looper, String persistenceFolder) {
         super(looper);
+        this.persistenceFolder = persistenceFolder;
     }
 
     @Override
@@ -79,7 +81,7 @@ public abstract class FusesourceConnection extends Connection {
             }
         };
 
-        sender = new Sender("path", this, topic);
+        sender = new Sender(persistenceFolder, this, topic);
 
         connection.connect(new org.fusesource.mqtt.client.Callback<Void>() {
             @Override

@@ -13,18 +13,21 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttTopic;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 
 /**
  * Created by michaelfeingold on 2/1/14.
  */
 public abstract class PahoConnection extends Connection
 {
+    private final String persistenceFolder;
     private MqttClient mqttClient;
     private String topic;
 
-    public PahoConnection(Looper looper) {
+    public PahoConnection(Looper looper, String persistenceFolder) {
         super(looper);
 
+        this.persistenceFolder = persistenceFolder;
     }
 
     @Override
@@ -32,7 +35,7 @@ public abstract class PahoConnection extends Connection
         try {
             this.topic = topic;
             final String topic_name = topic + "." + LISTENER_TOPIC_SUFFIX + ".User";
-            mqttClient = new MqttClient(brokerUrl, clientID, new MemoryPersistence());
+            mqttClient = new MqttClient(brokerUrl, clientID, new MqttDefaultFilePersistence(persistenceFolder));
             MqttConnectOptions options = new MqttConnectOptions();
             options.setCleanSession(true);
             mqttClient.connect(options);

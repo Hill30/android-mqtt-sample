@@ -91,7 +91,7 @@ public class Service extends android.app.Service {
         HandlerThread connectionThread = new HandlerThread("mqttConnection", Process.THREAD_PRIORITY_BACKGROUND);
         connectionThread.start();
 
-        connection = new PahoConnection(connectionThread.getLooper()) {
+        connection = new PahoConnection(connectionThread.getLooper(), getApplicationContext().getFilesDir().getPath() + "/MqttCache") {
 
             @Override
             public void onMessageRecieved(String message) {
