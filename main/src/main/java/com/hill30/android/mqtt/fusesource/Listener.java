@@ -1,6 +1,8 @@
-package com.hill30.android.mqtt;
+package com.hill30.android.mqtt.fusesource;
 
 import android.util.Log;
+
+import com.hill30.android.mqtt.Connection;
 
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;

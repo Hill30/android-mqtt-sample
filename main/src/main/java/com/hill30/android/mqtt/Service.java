@@ -11,6 +11,9 @@ import android.os.Process;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.hill30.android.mqtt.fusesource.FusesourceConnection;
+import com.hill30.android.mqtt.fusesource.Listener;
+import com.hill30.android.mqtt.fusesource.Sender;
 import com.hill30.android.net.Constants;
 
 import org.fusesource.mqtt.client.CallbackConnection;
@@ -83,41 +86,31 @@ public class Service extends android.app.Service {
     }
 
     private void restartConnection(){
+
         HandlerThread connectionThread = new HandlerThread("mqttConnection", Process.THREAD_PRIORITY_BACKGROUND);
         connectionThread.start();
 
-        connection = new Connection(connectionThread.getLooper()) {
+        connection = new FusesourceConnection(connectionThread.getLooper()) {
 
             @Override
-            public void onConnected(final CallbackConnection connection) {
-                listener = new Listener(connection, rootTopic){
-
-                    @Override
-                    public void onMessageReceived(String message) {
-                        // Broadcasts the Intent to receivers in this app.
-                        sendBroadcast(
-                                new Intent(Service.MESSAGE_RECEIVED).putExtra(Service.MESSAGE_PAYLOAD, message)
-                        );
-
-
-                    }
-                };
-
-                sender = new Sender(getApplicationContext().getFilesDir().getPath(), this, rootTopic);
-
-                registerReceiver(new BroadcastReceiver() {
-
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        sender.send(Service.this.connection, intent.getStringExtra(Service.MESSAGE_PAYLOAD));
-                    }
-
-                }, new IntentFilter(Service.SEND_MESSAGE));
-
-
+            public void onMessageRecieved(String message) {
+                // Broadcasts the Intent to receivers in this app.
+                sendBroadcast(
+                        new Intent(Service.MESSAGE_RECEIVED).putExtra(Service.MESSAGE_PAYLOAD, message)
+                );
             }
 
         };
+
+        registerReceiver(new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                connection.send(intent.getStringExtra(Service.MESSAGE_PAYLOAD));
+            }
+
+        }, new IntentFilter(Service.SEND_MESSAGE));
+
     }
 
 }

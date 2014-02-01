@@ -1,7 +1,10 @@
-package com.hill30.android.mqtt;
+package com.hill30.android.mqtt.fusesource;
 
 import android.util.Log;
 
+import com.hill30.android.mqtt.Connection;
+
+import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.QoS;
 
 import java.io.BufferedReader;
@@ -26,23 +29,9 @@ public class Sender {
         msg_folder_path = persistenceFolder;
         topicName = topic + "." + SENDER_TOPIC_SUFFIX;
 
-        File folder = new File(msg_folder_path);
-        Log.d(Connection.TAG, String.format("Message directory: %s", msg_folder_path));
-        if (folder.isDirectory()) {
-            if (folder.listFiles() != null)
-                for (File fileEntry : folder.listFiles()) {
-                    if(fileEntry.getName().contains(MSG_FILE_PREFIX)) {
-                        String msgRead = readMessageFile(fileEntry.getName());
-                        Log.d(Connection.TAG, String.format("Resending message. FileName: %s, MsgBody: %s.", fileEntry.getName(), msgRead));
-
-                        publish(connection, msgRead, fileEntry.getName());
-                    }
-                }
-        }
-
     }
 
-    public void send(Connection connection, String message) {
+    public void send(CallbackConnection connection, String message) {
 
         Log.e(Connection.TAG, "Sending message: " + message);
         // create message file name. Format: msg_to_send_ddMMyyyhhmmss.txt
@@ -55,7 +44,7 @@ public class Sender {
         publish(connection, message, msgFileName);
     }
 
-    private void publish(final Connection connection, final String message, final String fileNameToClear) {
+    private void publish(final CallbackConnection connection, final String message, final String fileNameToClear) {
         connection.publish(topicName, message.getBytes(), QoS.EXACTLY_ONCE, true,
             new org.fusesource.mqtt.client.Callback<Void>() {
 
@@ -68,7 +57,6 @@ public class Sender {
                 @Override
                 public void onFailure(Throwable throwable) {
                     Log.e(Connection.TAG, "Error sending message: " + throwable.getMessage());
-                    connection.restart();
                 }
             });
 
@@ -108,4 +96,20 @@ public class Sender {
         Log.d(Connection.TAG, String.format("Deleted file path: %s, name: %s. ", fileToDelete.getPath(), fileToDelete.getName()));
     }
 
+    public void onConnected(CallbackConnection connection) {
+        File folder = new File(msg_folder_path);
+        Log.d(Connection.TAG, String.format("Message directory: %s", msg_folder_path));
+        if (folder.isDirectory()) {
+            if (folder.listFiles() != null)
+                for (File fileEntry : folder.listFiles()) {
+                    if(fileEntry.getName().contains(MSG_FILE_PREFIX)) {
+                        String msgRead = readMessageFile(fileEntry.getName());
+                        Log.d(Connection.TAG, String.format("Resending message. FileName: %s, MsgBody: %s.", fileEntry.getName(), msgRead));
+
+                        publish(connection, msgRead, fileEntry.getName());
+                    }
+                }
+        }
+
+    }
 }
