@@ -13,6 +13,7 @@ import org.fusesource.mqtt.client.CallbackConnection;
 public abstract class Connection extends android.os.Handler {
 
     public final static String TAG = "MQTTConnection";
+    public static final String LISTENER_TOPIC_SUFFIX = "Inbound";
 
     private final static String userName = "";
     private final static String password = "";

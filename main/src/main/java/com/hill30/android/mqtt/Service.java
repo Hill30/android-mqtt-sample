@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.hill30.android.mqtt.fusesource.FusesourceConnection;
 import com.hill30.android.mqtt.fusesource.Listener;
 import com.hill30.android.mqtt.fusesource.Sender;
+import com.hill30.android.mqtt.paho.PahoConnection;
 import com.hill30.android.net.Constants;
 
 import org.fusesource.mqtt.client.CallbackConnection;
@@ -90,7 +91,7 @@ public class Service extends android.app.Service {
         HandlerThread connectionThread = new HandlerThread("mqttConnection", Process.THREAD_PRIORITY_BACKGROUND);
         connectionThread.start();
 
-        connection = new FusesourceConnection(connectionThread.getLooper()) {
+        connection = new PahoConnection(connectionThread.getLooper()) {
 
             @Override
             public void onMessageRecieved(String message) {

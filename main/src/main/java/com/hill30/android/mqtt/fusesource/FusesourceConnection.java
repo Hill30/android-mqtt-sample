@@ -18,8 +18,6 @@ import java.net.URISyntaxException;
 
 public abstract class FusesourceConnection extends Connection {
 
-    public final static String TAG = "MQTTConnection";
-
     private CallbackConnection connection;
     private Listener listener;
     private Sender sender;

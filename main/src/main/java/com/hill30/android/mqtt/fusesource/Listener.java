@@ -13,10 +13,8 @@ import org.fusesource.mqtt.client.Topic;
 
 public abstract class Listener {
 
-    private static final String LISTENER_TOPIC_SUFFIX = "Inbound";
-
     public Listener(CallbackConnection connection, String topic) {
-        final String topic_name = topic + "." + LISTENER_TOPIC_SUFFIX + ".User";
+        final String topic_name = topic + "." + Connection.LISTENER_TOPIC_SUFFIX + ".User";
         Topic[] topics = {new Topic(topic_name, QoS.AT_LEAST_ONCE)};
 
         connection.listener(new org.fusesource.mqtt.client.Listener() {
