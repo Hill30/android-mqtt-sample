@@ -4,7 +4,10 @@ import android.os.Looper;
 
 import com.hill30.android.mqtt.Connection;
 
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -21,7 +24,7 @@ import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 public abstract class PahoConnection extends Connection
 {
     private final String persistenceFolder;
-    private MqttClient mqttClient;
+    private MqttAsyncClient mqttClient;
     private String topic;
 
     public PahoConnection(Looper looper, String persistenceFolder) {
@@ -35,11 +38,7 @@ public abstract class PahoConnection extends Connection
         try {
             this.topic = topic;
             final String topic_name = topic + "." + LISTENER_TOPIC_SUFFIX + ".User";
-            mqttClient = new MqttClient(brokerUrl, clientID, new MqttDefaultFilePersistence(persistenceFolder));
-            MqttConnectOptions options = new MqttConnectOptions();
-            options.setCleanSession(true);
-            mqttClient.connect(options);
-            mqttClient.subscribe(topic_name, 2 /*QoS = EXACTLY_ONCE*/);
+            mqttClient = new MqttAsyncClient(brokerUrl, clientID, new MqttDefaultFilePersistence(persistenceFolder));
             mqttClient.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable cause) {
@@ -53,6 +52,23 @@ public abstract class PahoConnection extends Connection
 
                 @Override
                 public void deliveryComplete(IMqttDeliveryToken token) {
+
+                }
+            });
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setCleanSession(true);
+            mqttClient.connect(options, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    try {
+                        mqttClient.subscribe(topic_name, 2 /*QoS = EXACTLY_ONCE*/);
+                    } catch (MqttException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
 
                 }
             });
