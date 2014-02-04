@@ -42,11 +42,11 @@
             android:enabled="true">
         </service>
 
-        <receiver android:name="com.hill30.android.net.NetworkStatusReceiver" >
+        <!-- receiver android:name="com.hill30.android.net.NetworkStatusReceiver" >
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
-        </receiver>
+        </receiver-->
     </application>
 
 </manifest>
